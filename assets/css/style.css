@@ -495,35 +495,24 @@ main {
   #ABOUT
 \*-----------------------------------*/
 
-.about .article-title {
-  margin-bottom: 15px;
-}
+.about .article-title { margin-bottom: 15px; }
 
 .about-text {
-  color: #ffffff; /* 텍스트를 흰색으로 설정 */
+  color: var(--light-gray);
   font-size: var(--fs-6);
   font-weight: var(--fw-300);
-  line-height: 1.5; /* 필요시 줄 간격을 약간 좁힘 */
-  margin: 0; /* 줄 간격 없애기 */
+  line-height: 1.6;
 }
 
 .about-text p {
-  margin: 0; /* 문단 사이 줄 간격 제거 */
+  margin: 0; /* 문단 사이 간격 제거 */
   padding: 0;
 }
 
 .about-text a {
-  color: #ffffff; /* 링크 텍스트 색상을 흰색으로 */
-  text-decoration: underline; /* 밑줄 추가 */
+  color: #ffffff; /* 링크를 흰색으로 설정 */
+  text-decoration: underline; /* 밑줄 표시 */
 }
-
-.about-text a:hover {
-  color: #cccccc; /* 링크 호버 시 색상 변경 (선택 사항) */
-  text-decoration: underline; /* 밑줄 유지 */
-}
-
-
-
 
 /**
  * #service 
