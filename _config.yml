@@ -16,7 +16,7 @@ timezone: Asia/Seoul
 
 title: Kim Byeong Gyu # the main title
 
-tagline: MS course student in POSTECH # it will display as the subtitle
+tagline: M.S graduate student in POSTECH # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   A minimal, responsive and feature-rich Jekyll theme for technical writing.
@@ -38,10 +38,10 @@ social:
   email: qudrb6989@postech.ac.kr # change to your email address
   links:
     # The first element serves as the copyright owner's link
-    - https://twitter.com/username # change to your Twitter homepage
+    #- https://twitter.com/username # change to your Twitter homepage
     - https://github.com/byeonggyu-kim # change to your GitHub homepage
     # Uncomment below to add more social links
-    # https://www.facebook.com/profile.php?id=100004644196611
+    - https://www.facebook.com/profile.php?id=100004644196611
     - https://www.linkedin.com/in/byeong-gyu-kim-317b782b2
 
 # Site Verification Settings
