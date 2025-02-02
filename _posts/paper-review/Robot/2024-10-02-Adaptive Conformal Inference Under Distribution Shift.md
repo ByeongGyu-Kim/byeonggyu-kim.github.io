@@ -11,7 +11,7 @@ description:
 toc: true
 comments: false
 cdn: 
-image: ../../../assets/img/paper-review
+image:
 math: true
 pin: false
 mermaid: false
@@ -63,5 +63,5 @@ A deep learning system can represent the concept of an image of a person by **co
 
 The quintessential example of a deep learning model is the feedforward deep network, called **multilayer perceptron** (MLP)[^fn-nth-5].
 
-![Desktop View](aci/fig1.1.png)
+![Desktop View](/assets/img/paper-review/aci/fig1.1.png)
 _Figure 1.1: Example of different representations_
