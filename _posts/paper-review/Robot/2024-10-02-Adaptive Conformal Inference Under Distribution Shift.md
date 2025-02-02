@@ -11,7 +11,7 @@ description:
 toc: true
 comments: false
 cdn: 
-image: /assets/img/paper_review
+image: /assets/img/paper-review
 math: true
 pin: false
 mermaid: false
