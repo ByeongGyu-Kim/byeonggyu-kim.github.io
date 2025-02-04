@@ -2,7 +2,7 @@
 title: "Adaptive Conformal Inference Under Distribution Shift"
 date: 2025-02-02 00:11:35 +0900
 categories:
-  - paper-review
+  - [Paper-Review, Trustworthy Machine Learning]
 tags:
   - Conformal prediction
   - Adaptive Conformal Inference(ACI)

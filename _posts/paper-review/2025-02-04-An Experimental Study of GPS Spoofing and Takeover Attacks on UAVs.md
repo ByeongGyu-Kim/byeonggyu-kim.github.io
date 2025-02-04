@@ -2,7 +2,7 @@
 title: "An Experimental Study of GPS Spoofing and Takeover Attacks on UAVs"
 date: 2025-02-04 18:00:00 +0900
 categories:
-  - paper-review
+  - [Paper-Review, Security]
 tags:
   - Conformal prediction
   - GPS
