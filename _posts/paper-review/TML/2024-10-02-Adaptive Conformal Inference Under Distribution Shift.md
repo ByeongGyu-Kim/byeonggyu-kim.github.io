@@ -17,7 +17,7 @@ pin: false
 mermaid: false
 ---
 # Summary
-
+df
 ## 1. Introduction
 
 현대 사회에서 **Machine Learning 알고리즘**은 점점 더 많은 분야에서 중요한 의사결정을 하는데 활용되고 있습니다. 
