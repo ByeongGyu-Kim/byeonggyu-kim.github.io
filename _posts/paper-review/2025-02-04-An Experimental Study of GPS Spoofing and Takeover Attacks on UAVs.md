@@ -5,8 +5,7 @@ categories:
   - paper-review
 tags:
   - Conformal prediction
-  - Adaptive Conformal Inference(ACI)
-  - Distribution shift
+  - GPS
 description: 
 toc: true
 comments: false
