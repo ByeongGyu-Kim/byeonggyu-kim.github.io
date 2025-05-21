@@ -88,7 +88,7 @@ _Figure 3: Test error and NLL of a 110-layer ResNet with stochastic depth on CIF
 - 실험에서는 learning rate가 낮아지는 구간에서 test error는 계속 줄어드는 반면, NLL은 다시 증가하는 현상을 보였습니다.
 - 이는 모델이 **정확도는 높이지만 confidence가 실제보다 과도한 상태로 학습이 진행되고 있음**을 의미합니다.
 
-예시: ResNet-110 + stochastic depth (on CIFAR-100)
+실험 결과 (ResNet-110 + stochastic depth on CIFAR-100):
 - Epoch 250 이후 learning rate 감소
 - 이후 test error는 감소 (29% → 27%)하지만, NLL은 증가
 
@@ -140,3 +140,120 @@ $$
 $$
 \text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{n} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
 $$
+
+## 🛠️ 4. Calibration Methods
+
+본 장에서는 이미 학습된 모델에 대해 **확률 보정을 위한 사후 처리(Post-hoc) 방법**들을 소개합니다. 이들은 모델의 예측 구조나 정확도는 유지하면서, **예측 확률(confidence)**이 실제 정답률과 더 잘 일치하도록 만들어줍니다.
+
+---
+
+### 📘 4.1 이진 분류에서의 Calibration
+
+모델은 입력 \( X \)에 대해 다음과 같은 예측을 수행한다고 가정합니다:
+
+$$
+h(X) = (\hat{Y}, \hat{P})
+$$
+
+여기서  
+- \( \hat{Y} \): 예측된 클래스  
+- \( \hat{P} \): 예측 확률, 일반적으로 softmax 또는 sigmoid 출력의 최대값
+
+---
+
+#### 🔹 Histogram Binning
+
+- 예측 확률 \( \hat{P} \in [0, 1] \) 구간을 균등하게 나누고,
+- 각 구간(bin)마다 실제 정답률의 평균을 계산하여 보정된 확률로 사용
+
+예:
+- 0.7–0.8 구간에 100개의 샘플이 있고, 75개가 정답이면 → 보정 확률은 0.75
+
+---
+
+#### 🔹 Isotonic Regression
+
+- 단조 증가 함수로 확률을 보정
+- 구간 간 계단형으로 조정되며 유연하지만 과적합 가능성 존재
+
+---
+
+#### 🔹 Platt Scaling
+
+- 로짓(logit)을 입력으로 하는 로지스틱 회귀 기반 보정 방법
+
+$$
+\hat{q}_i = \sigma(a z_i + b)
+$$
+
+- 파라미터 \( a, b \)는 validation set에서 학습
+- 간단하고 안정적이며, 이진 분류에 효과적
+
+---
+
+### 📘 4.2 다중 클래스 분류에서의 확장
+
+다중 클래스에서는 softmax를 사용하여 다음과 같이 확률을 계산합니다:
+
+$$
+\hat{P} = \max_k \left( \frac{e^{z_k}}{\sum_j e^{z_j}} \right)
+$$
+
+---
+
+#### 🔹 Matrix Scaling
+
+- 로짓 벡터 \( z \)에 선형 변환 적용:
+
+$$
+\hat{q} = \text{softmax}(W z + b)
+$$
+
+- \( W \in \mathbb{R}^{K \times K} \), \( b \in \mathbb{R}^K \)
+- 강력한 표현력을 가지지만 파라미터 수가 많아 과적합 우려
+
+---
+
+#### 🔹 Vector Scaling
+
+- Matrix Scaling의 간소화 버전으로 \( W \)를 대각 행렬로 제한
+
+$$
+\hat{q} = \text{softmax}(D z + b)
+$$
+
+- 파라미터 수가 \( 2K \)개로 줄어들며 계산량과 과적합 가능성이 감소
+
+---
+
+#### 🌡️ Temperature Scaling
+
+- 가장 간단하면서도 강력한 보정 기법
+- 로짓을 스칼라 \( T \)로 나누고 softmax 적용
+
+$$
+\hat{q} = \text{softmax}(z / T)
+$$
+
+- \( T > 1 \): 확률이 분산됨 (과신 완화)
+- \( T = 1 \): 원래 모델과 동일
+- \( T < 1 \): 확률이 더 sharp해짐
+
+---
+
+### 📌 Temperature Scaling의 특징
+
+- 단 하나의 파라미터 \( T \)만 조정
+- 모델의 예측 클래스는 유지되며, confidence만 조정됨
+- 다중 클래스에서도 손쉽게 적용 가능
+
+---
+
+### 🧪 실험 중 Temperature Scaling의 효과
+
+- Epoch 250 이후 learning rate 감소
+- 이후 test error는 감소 (29% → 27%)하지만, NLL은 증가
+- 이는 모델이 더 정확해졌지만, 확률 분포는 더 과신하게 되었음을 의미
+- Temperature Scaling은 이러한 overconfidence를 효과적으로 완화함
+
+---
