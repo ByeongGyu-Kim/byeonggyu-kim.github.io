@@ -30,6 +30,64 @@ _Figure 1.1: Confidence histograms (top) and reliability diagrams (bottom) for a
 
 본 논문에서는 이러한 문제를 해결하기 위해 다양한 사후 보정(post-hoc calibration) 방법들을 실험적으로 비교하고, 그 중에서도 Temperature Scaling이라는 단 하나의 스칼라 파라미터만을 사용하는 간단한 방법이 매우 효과적이라는 사실을 밝혀냈다. 본 글에서는 이의 실험 코드도 구현하였다.
 
+## 신경망의 Overconfidence 원인 분석
+
+최근의 신경망 모델들은 높은 정확도를 자랑하지만, 그 **confidence (예측 확률)** 는 실제 정답률과 잘 맞지 않는 경우가 많다. 이 현상을 **miscalibration (불완전한 보정)** 이라고 하며, 본 장에서는 그 원인과 관련 요소들을 분석합니다.
+
+### 3.1 모델 용량의 증가 (Model Capacity)
+
+- 최근 딥러닝 모델들은 레이어 수(depth)와 필터 수(width)가 급격히 증가하여, 학습 데이터를 더 잘 맞출 수 있는 **모델 용량(capacity)** 을 갖추게 되었습니다.
+- 하지만 모델 용량이 커질수록 오히려 **confidence가 실제 정확도보다 과도하게 높아지는 과신(overconfidence)** 경향이 나타납니다.
+
+실험 결과 (ResNet on CIFAR-100):
+- 깊이(depth)를 증가시키면 ECE도 증가
+- 너비(width)를 증가시켜도 ECE 증가
+
+> 모델은 학습 중 NLL(negative log-likelihood)을 계속 줄이기 위해 확률 예측값(confidence)을 점점 더 1에 가깝게 만들게 되며, 이는 과신을 초래합니다.
+{: .prompt-tip }
+
+---
+
+## 3.2 Batch Normalization의 영향
+
+- **Batch Normalization(BN)**은 학습을 빠르고 안정적으로 만들어주는 기술로 널리 사용됩니다.
+- 하지만, BN을 사용한 모델들은 **정확도는 올라가지만 calibration은 오히려 나빠지는** 현상이 나타납니다.
+
+실험 결과:
+- BN을 적용한 ConvNet은 정확도가 약간 올라가지만, ECE는 뚜렷하게 증가
+
+> BN은 내부 분포의 변화를 안정시켜 훈련을 용이하게 하지만, confidence는 더 과도하게 높게 나올 수 있습니다.
+
+---
+
+## 3.3 Weight Decay 감소의 영향
+
+- 전통적으로 weight decay는 과적합을 막기 위한 정규화 방법으로 널리 사용되었습니다.
+- 최근에는 BN의 정규화 효과 때문에 weight decay 사용량이 줄어드는 추세입니다.
+- 하지만 실험에서는 **weight decay를 증가시킬수록 calibration은 개선되는 경향**을 보입니다.
+
+실험 결과:
+- 작은 weight decay → 과신, 높은 ECE
+- 적절한 weight decay → 낮은 ECE, 개선된 calibration
+
+> 즉, 정확도를 최대화하는 weight decay 설정과 calibration을 최적화하는 설정은 서로 다를 수 있으며, 정확도는 유지되더라도 confidence는 왜곡될 수 있습니다.
+
+---
+
+## 3.4 NLL 과적합 현상 (Overfitting to NLL)
+
+- 실험에서는 learning rate가 낮아지는 구간에서 test error는 계속 줄어드는 반면, NLL은 다시 증가하는 현상을 보였습니다.
+- 이는 모델이 **정확도는 높이지만 confidence가 실제보다 과도한 상태로 학습이 진행되고 있음**을 의미합니다.
+
+예시: ResNet-110 + stochastic depth (on CIFAR-100)
+- Epoch 250 이후 learning rate 감소
+- 이후 test error는 감소 (29% → 27%)하지만, NLL은 증가
+
+> 정확도(0/1 loss)는 줄지만, NLL에 대한 과적합으로 인해 **confidence가 비정상적으로 높아지는 보정 오류**가 발생합니다.
+
+
+
+
 ## 📐 Calibration의 정의 및 측정 방법
 
 본 논문에서는 다중 클래스 분류 문제를 다루고 있으며, 딥러닝 모델은 주어진 입력 $X \in \mathcal{X}, \quad Y \in \{1, \dots, K\}$를 예측하는다고 가정한다. 모델의 예측 확률은 다음과 같이 정의된다.
