@@ -32,49 +32,58 @@ _Figure 1.1: Confidence histograms (top) and reliability diagrams (bottom) for a
 
 ## 신경망의 Overconfidence 원인 분석
 
-최근의 신경망 모델들은 높은 정확도를 자랑하지만, 그 **confidence (예측 확률)** 는 실제 정답률과 잘 맞지 않는 경우가 많다. 이 현상을 **miscalibration (불완전한 보정)** 이라고 하며, 본 장에서는 그 원인과 관련 요소들을 분석합니다.
+최근의 신경망 모델들은 높은 정확도를 자랑하지만, 그 **confidence (예측 확률)** 는 실제 정답률과 잘 맞지 않는 경우가 많다. 이 현상을 **miscalibration (불완전한 보정)** 이라고 하며, 그 원인과 관련 요소들을 우선 분석하였다.
+
+
+![Desktop View](/assets/img/paper-review/On_Calibration_of_modern_NN/figure2.png)
+_Figure 2: The effect of network depth (far left), width (middle left), Batch Normalization (middle right), and weight decay (far right) on
+miscalibration, as measured by ECE (lower is better)_
+
 
 ### 3.1 모델 용량의 증가 (Model Capacity)
 
-- 최근 딥러닝 모델들은 레이어 수(depth)와 필터 수(width)가 급격히 증가하여, 학습 데이터를 더 잘 맞출 수 있는 **모델 용량(capacity)** 을 갖추게 되었습니다.
-- 하지만 모델 용량이 커질수록 오히려 **confidence가 실제 정확도보다 과도하게 높아지는 과신(overconfidence)** 경향이 나타납니다.
+- 최근 딥러닝 모델들은 레이어 수와 필터 수가 급격히 증가하여, 학습 데이터를 더 잘 맞출 수 있는 **모델 용량(capacity)** 을 갖추게 되었다.
+- 하지만 모델 용량이 커질수록 오히려 **confidence가 실제 정확도보다 과도하게 높아지는 과신, 즉 overconfidence** 하는 경향이 나타납니다.
 
 실험 결과 (ResNet on CIFAR-100):
-- 깊이(depth)를 증가시키면 ECE도 증가
-- 너비(width)를 증가시켜도 ECE 증가
+- 깊이(depth)를 증가시키면 Error은 줄어드나 ECE가 증가
+- 필터 수(width)를 증가시키면 Error은 확연히 줄어드나, ECE가 증가
 
-> 모델은 학습 중 NLL(negative log-likelihood)을 계속 줄이기 위해 확률 예측값(confidence)을 점점 더 1에 가깝게 만들게 되며, 이는 과신을 초래합니다.
+> 높은 capacity는 overfitting을 야기할 수 있으며, 이러한 경우 정확도는 좋아져도 확률의 품질은 나빠진다.
 {: .prompt-tip }
 
 ---
 
-## 3.2 Batch Normalization의 영향
+### 3.2 Batch Normalization의 영향
 
-- **Batch Normalization(BN)**은 학습을 빠르고 안정적으로 만들어주는 기술로 널리 사용됩니다.
+- **Batch Normalization**은 딥러닝 모델의 학습을 안정화시키고 빠르게 만드는 기법으로, 현대 아키텍처에서 필수적으로 사용된다.
 - 하지만, BN을 사용한 모델들은 **정확도는 올라가지만 calibration은 오히려 나빠지는** 현상이 나타납니다.
 
-실험 결과:
-- BN을 적용한 ConvNet은 정확도가 약간 올라가지만, ECE는 뚜렷하게 증가
+실험 결과 (6-layer ConvNet on CIFAR-100):
+- BN을 적용한 ConvNet은 정확도가 약간 올라가지만(Error 감소), ECE는 뚜렷하게 증가
 
-> BN은 내부 분포의 변화를 안정시켜 훈련을 용이하게 하지만, confidence는 더 과도하게 높게 나올 수 있습니다.
-
+> BN은 내부 활성 분포를 정규화하여 학습을 더 잘 되게 하지만, 결과적으로 출력 확률이 더 과신된(overconfident) 상태로 나타나 calibration에는 부정적인 영향을 미치게 된다.
+{: .prompt-tip }
 ---
 
-## 3.3 Weight Decay 감소의 영향
+### 3.3 Weight Decay 감소의 영향
 
-- 전통적으로 weight decay는 과적합을 막기 위한 정규화 방법으로 널리 사용되었습니다.
-- 최근에는 BN의 정규화 효과 때문에 weight decay 사용량이 줄어드는 추세입니다.
+- 전통적으로 **weight decay** 는 과적합을 막기 위한 정규화 방법으로 널리 사용되어 왔으며, overfitting을 방지하기 위해 가중치에 패널티를 주는 정규화 기법이다.
+- 최근에는 BN의 정규화 효과 때문에 weight decay 사용량이 줄어드는 추세이다.
 - 하지만 실험에서는 **weight decay를 증가시킬수록 calibration은 개선되는 경향**을 보입니다.
 
-실험 결과:
-- 작은 weight decay → 과신, 높은 ECE
-- 적절한 weight decay → 낮은 ECE, 개선된 calibration
+실험 결과 (ResNet-110 on CIFAR-100):
+- Weight decay를 증가시키면 분류 정확도(Error)는 특정 구간에서 최적점을 찍고 이후 다시 증가
+- ECE는 weight decay가 증가할수록 감소하는 경향을 보임
 
-> 즉, 정확도를 최대화하는 weight decay 설정과 calibration을 최적화하는 설정은 서로 다를 수 있으며, 정확도는 유지되더라도 confidence는 왜곡될 수 있습니다.
-
+> 즉, 정확도를 최대화하는 weight decay 설정과 calibration을 최적화하는 설정은 서로 다를 수 있으며, 정확도는 유지되더라도 confidence는 왜곡될 수 있다.
+{: .prompt-tip }
 ---
 
-## 3.4 NLL 과적합 현상 (Overfitting to NLL)
+### 3.4 NLL 과적합 현상 (Overfitting to NLL)
+
+![Desktop View](/assets/img/paper-review/On_Calibration_of_modern_NN/figure3.png)
+_Figure 3: Test error and NLL of a 110-layer ResNet with stochastic depth on CIFAR-100 during training_
 
 - 실험에서는 learning rate가 낮아지는 구간에서 test error는 계속 줄어드는 반면, NLL은 다시 증가하는 현상을 보였습니다.
 - 이는 모델이 **정확도는 높이지만 confidence가 실제보다 과도한 상태로 학습이 진행되고 있음**을 의미합니다.
@@ -88,7 +97,7 @@ _Figure 1.1: Confidence histograms (top) and reliability diagrams (bottom) for a
 
 
 
-## 📐 Calibration의 정의 및 측정 방법
+### 📐 Calibration의 정의 및 측정 방법
 
 본 논문에서는 다중 클래스 분류 문제를 다루고 있으며, 딥러닝 모델은 주어진 입력 $X \in \mathcal{X}, \quad Y \in \{1, \dots, K\}$를 예측하는다고 가정한다. 모델의 예측 확률은 다음과 같이 정의된다.
 
