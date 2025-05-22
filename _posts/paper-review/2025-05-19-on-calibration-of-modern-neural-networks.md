@@ -170,17 +170,40 @@ Calibration은 $$\hat{p}_i$$ 또는 $$z_i$$를 조정하여 새로운 calibrated
 
 #### A. Histogram Binning
 
-
+Histogram Binning은 모델이 출력하는 확률을 일정 구간(bin)으로 나누고, 각 구간 내에서의 실제 정답 비율을 새로운 보정 확률로 사용하는 방법이다.
 모든 $$\hat{p}_i$$를 $$M$$개의 구간(bin) $$B_1, B_2, ..., B_M$$으로 나눈다. 각 bin마다 정답률을 계산하여 그 값을 보정된 확률로 사용한다.
 
 - 구간 정의: $$B_m = (a_m, a_{m+1}]$$ where $$0 = a_1 \leq a_2 \leq \dots \leq a_{M+1} = 1$$
 - 보정된 확률:
 $$
-\hat{q}_i = \theta_m \quad \text{if } \hat{p}_i \in B_m
+\hat{q}_i = \theta_m \quad \text{if } \hat{p}_i \in B_m,
 $$
 $$
 \theta_m = \frac{1}{|B_m|} \sum_{i \in B_m} y_i
 $$
+
+\[
+\min_{\theta_1,\dots,\theta_M} \sum_{m=1}^{M} \sum_{i=1}^{n} \mathbf{1}(a_m \leq \hat{p}_i < a_{m+1}) (\theta_m - y_i)^2 \tag{7}
+\]
+
+여기서 $\mathbf{1}(\cdot)$은 indicator 함수이며, 각 bin의 보정 확률은 bin 내 레이블 평균으로 계산된다:
+
+\[
+\theta_m = \frac{1}{|B_m|} \sum_{i \in B_m} y_i
+\]
+
+1. 예측 확률과 실제 정답
+| 샘플 번호 | 예측 확률 $$\hat{p}\_i$$ | 실제 정답 $$y\_i$$ |
+| :---- | :------------------- | -------------: |
+| 1     | 0.15                 |              0 |
+| 2     | 0.22                 |              1 |
+| 3     | 0.35                 |              1 |
+| 4     | 0.48                 |              0 |
+| 5     | 0.63                 |              1 |
+| 6     | 0.72                 |              1 |
+| 7     | 0.85                 |              1 |
+| 8     | 0.89                 |              0 |
+| 9     | 0.95                 |              1 |
 
 단순하고 직관적이지만, 예측이 계단 함수처럼 변경되어 부드럽지 않다.
 
@@ -212,7 +235,7 @@ $$
 
 정확도는 그대로 유지하면서 확률을 조정할 수 있는 간단한 방법.
 
-#### D. BBQ (Bayesian Binning into Quantiles)}
+#### D. BBQ (Bayesian Binning into Quantiles)
 
 Histogram Binning의 확장으로, 여러 binning scheme을 고려하여 Bayesian model averaging을 수행한다.
 
