@@ -114,9 +114,7 @@ $$
 
 위 식에서 알 수 있듯이 모델이 **완벽히 보정(calibrated)**되어 있다는 것은, 예측한 확률 값이 실제 정답률과 일치하는 것을 의미한다. 예를 들어 모델이 100개의 샘플에 대해 모두 0.8의 confidence를 출력했다면, 실제로 그 중 약 80개가 맞아야 완벽히 보정된 것이다.
 
-### 📊 실전에서는 어떻게 측정하는가?
-
-#### 🔍 Reliability Diagram (신뢰도 다이어그램)
+### 🔍 Reliability Diagram (신뢰도 다이어그램)
 
 예측 확률 $$\hat{P}$$를 구간으로 잘게 나누고, 각 구간에서의 **실제 정답률(accuracy)**과 **평균 confidence**를 비교한다. 만약 모델이 잘 보정되어져 있다면, 각 구간에서는 아래의 관계식이 성립해야한다는 것이다.
 
@@ -134,14 +132,14 @@ $$
 
 여기서 $$\text{acc}(B_m)$$는 구간 $$B_m$$에 속하는 샘플들의 실제 정답률, $$\text{conf}(B_m)$$는 구간 $$B_m$$에 속하는 샘플들의 평균 confidence를 의미한다. 만약 모델이 잘 보정되어 있다면, 두 값은 서로 비슷해야 한다.
 
-#### 📏 Expected Calibration Error (ECE)
+### 📏 Expected Calibration Error (ECE)
 ECE는 모델의 전체 calibration 성능을 수치적으로 측정하는 대표적인 지표로, 각 bin에 대해 예측 확률과 실제 정답률 간의 차이를 평균하여 계산한다. $$M$$개의 bin으로 나누고, 각 bin $$B_m$$에 대해 다음과 같이 정의된다.
 
 $$
 \text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{n} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
 $$
 
-#### 📏 Maximum Calibration Error (MCE)
+### 📏 Maximum Calibration Error (MCE)
 MCE는 가장 큰 오차를 보인 bin의 calibration gap을 측정하게 되며, 쉽게 말해 “최악의 보정 실패” 정도를 나타낸다고 생각할 수 있다. 안전이 중요한 시스템에서 매우 중요한 지표로 사용될 수 있다.
 
 $$
@@ -149,57 +147,77 @@ $$
 $$
 
 
-
-
 ## 🛠️ Calibration Methods
 
-본 장에서는 이미 학습된 모델에 대해 **확률 보정을 위한 사후 처리(Post-hoc) 방법**들을 소개합니다. 이들은 모델의 예측 구조나 정확도는 유지하면서, **예측 확률(confidence)**이 실제 정답률과 더 잘 일치하도록 만들어줍니다.
+본 논문에서는 이미 학습된 모델에 대해 **확률 보정을 위한 사후 처리(Post-hoc) 방법**들을 소개하고 있으며, 이들은 모델의 예측 구조나 정확도는 유지하면서, **예측 확률(confidence)**이 실제 정답률과 더 잘 일치하도록 만들어준다.
 
----
+### 📘 1. Calibrating Binary Models
 
-### 📘 4.1 이진 분류에서의 Calibration
-
-모델은 입력 \( X \)에 대해 다음과 같은 예측을 수행한다고 가정합니다:
+우선 다룰 내용은 **이진 분류(binary classification)** 상황에서의 confidence calibration 기법들을 알아보고자 한다. 이 경우 클래스 라벨은 $$Y \in \{0, 1\}$$이며, 모델은 positive 클래스(1)에 대한 확률 $$\hat{p}_i$$와 logit $$z_i \in \mathbb{R}$$를 출력한다. 확률은 보통 sigmoid 함수를 통해 다음과 같이 계산된다:
 
 $$
-h(X) = (\hat{Y}, \hat{P})
+\hat{p}_i = \sigma(z_i) = \frac{1}{1 + \exp(-z_i)}
 $$
 
-여기서  
-- \( \hat{Y} \): 예측된 클래스  
-- \( \hat{P} \): 예측 확률, 일반적으로 softmax 또는 sigmoid 출력의 최대값
+Calibration은 $$\hat{p}_i$$ 또는 $$z_i$$를 조정하여 새로운 calibrated 확률 $$\hat{q}_i$$를 얻는 것이다.
 
----
 
-#### 🔹 Histogram Binning
+#### A. Histogram Binning
 
-- 예측 확률 \( \hat{P} \in [0, 1] \) 구간을 균등하게 나누고,
-- 각 구간(bin)마다 실제 정답률의 평균을 계산하여 보정된 확률로 사용
 
-예:
-- 0.7–0.8 구간에 100개의 샘플이 있고, 75개가 정답이면 → 보정 확률은 0.75
+모든 $$\hat{p}_i$$를 $$M$$개의 구간(bin) $$B_1, B_2, ..., B_M$$으로 나눈다. 각 bin마다 정답률을 계산하여 그 값을 보정된 확률로 사용한다.
 
----
-
-#### 🔹 Isotonic Regression
-
-- 단조 증가 함수로 확률을 보정
-- 구간 간 계단형으로 조정되며 유연하지만 과적합 가능성 존재
-
----
-
-#### 🔹 Platt Scaling
-
-- 로짓(logit)을 입력으로 하는 로지스틱 회귀 기반 보정 방법
-
+- 구간 정의: $$B_m = (a_m, a_{m+1}]$$ where $$0 = a_1 \leq a_2 \leq \dots \leq a_{M+1} = 1$$
+- 보정된 확률:
 $$
-\hat{q}_i = \sigma(a z_i + b)
+\hat{q}_i = \theta_m \quad \text{if } \hat{p}_i \in B_m
+$$
+$$
+\theta_m = \frac{1}{|B_m|} \sum_{i \in B_m} y_i
 $$
 
-- 파라미터 \( a, b \)는 validation set에서 학습
-- 간단하고 안정적이며, 이진 분류에 효과적
+단순하고 직관적이지만, 예측이 계단 함수처럼 변경되어 부드럽지 않다.
 
----
+#### B. Isotonic Regression
+
+$\hat{p}_i$에 대해 단조 증가(monotonic) 함수 $f$를 학습하여:
+
+$$
+\hat{q}_i = f(\hat{p}_i)
+$$
+
+- 목적 함수:
+$$
+\min_f \sum_{i=1}^n (f(\hat{p}_i) - y_i)^2 \quad \text{subject to } f \text{ is monotonic}
+$$
+
+이 방법은 histogram보다 유연하지만, 과적합의 가능성이 있으며 정규화가 필요할 수 있다
+
+#### C. Platt Scaling
+
+모델이 출력한 logit $z_i$를 입력으로 사용하여, sigmoid를 적용한 **로지스틱 회귀**를 수행함:
+
+$$
+\hat{q}_i = \sigma(az_i + b) = \frac{1}{1 + \exp(-(az_i + b))}
+$$
+
+- $a$, $b$는 validation set에서 NLL을 최소화하도록 학습
+- 신경망 파라미터는 고정됨
+
+정확도는 그대로 유지하면서 확률을 조정할 수 있는 간단한 방법.
+
+#### D. BBQ (Bayesian Binning into Quantiles)}
+
+Histogram Binning의 확장으로, 여러 binning scheme을 고려하여 Bayesian model averaging을 수행한다.
+
+- calibrated 확률:
+$$
+P(\hat{q}_i | \hat{p}_i, D) = \sum_{s \in \mathcal{S}} P(\hat{q}_i | s, \hat{p}_i, D) \cdot P(s | D)
+$$
+
+- 여기서 $s$는 binning scheme이며, prior는 Beta 분포, likelihood는 binomial로 계산됨
+
+정확하지만 구현이 복잡하고 계산량이 많음.
 
 ### 📘 4.2 다중 클래스 분류에서의 확장
 
