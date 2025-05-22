@@ -30,6 +30,9 @@ _Figure 1.1: Confidence histograms (top) and reliability diagrams (bottom) for a
 
 본 논문에서는 이러한 문제를 해결하기 위해 다양한 사후 보정(post-hoc calibration) 방법들을 실험적으로 비교하고, 그 중에서도 Temperature Scaling이라는 단 하나의 스칼라 파라미터만을 사용하는 간단한 방법이 매우 효과적이라는 사실을 밝혀냈다. 본 글에서는 이의 실험 코드도 구현하였다.
 
+---
+
+
 ## 🔍 신경망의 Overconfidence 원인 분석
 
 최근의 신경망 모델들은 높은 정확도를 자랑하지만, 그 **confidence (예측 확률)** 는 실제 정답률과 잘 맞지 않는 경우가 많다. 이 현상을 **miscalibration (불완전한 보정)** 이라고 하며, 그 원인과 관련 요소들을 우선 분석하였다.
@@ -95,6 +98,7 @@ _Figure 3: Test error and NLL of a 110-layer ResNet with stochastic depth on CIF
 > 최신 신경망은 학습 후반부에서 NLL을 계속 최소화하려는 과정에서 confidence를 과도하게 높이는 경향이 있으며, 이로 인해 실제 정답률보다 높은 확률을 출력하는 overconfident한 상태로 calibration 오류가 발생한다.
 {: .prompt-tip }
 
+---
 
 ## 📐 Calibration의 정의 및 측정 방법
 
@@ -146,6 +150,8 @@ $$
 \text{MCE} = \max_{m \in \{1, \dots, M\}} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
 $$
 
+
+---
 
 ## 🛠️ Calibration Methods
 
@@ -219,7 +225,7 @@ $$
 
 정확하지만 구현이 복잡하고 계산량이 많음.
 
-### 📘 4.2 다중 클래스 분류에서의 확장
+### 📘 2. Extension to Multiclass Models
 
 다중 클래스에서는 softmax를 사용하여 다음과 같이 확률을 계산합니다:
 
