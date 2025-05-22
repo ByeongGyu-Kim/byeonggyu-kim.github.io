@@ -43,7 +43,7 @@ miscalibration, as measured by ECE (lower is better)_
 ### 1. 모델 용량의 증가 (Model Capacity)
 
 - 최근 딥러닝 모델들은 레이어 수와 필터 수가 급격히 증가하여, 학습 데이터를 더 잘 맞출 수 있는 **모델 용량(capacity)** 을 갖추게 되었다.
-- 하지만 모델 용량이 커질수록 오히려 **confidence가 실제 정확도보다 과도하게 높아지는 과신, 즉 overconfidence** 하는 경향이 나타납니다.
+- 하지만 모델 용량이 커질수록 오히려 **confidence가 실제 정확도보다 과도하게 높아지는 과신, 즉 overconfidence** 하는 경향이 나타난다.
 
 실험 결과 (ResNet on CIFAR-100):
 - 깊이(depth)를 증가시키면 Error은 줄어드나 ECE가 증가
@@ -57,7 +57,7 @@ miscalibration, as measured by ECE (lower is better)_
 ### 2. Batch Normalization의 영향
 
 - **Batch Normalization**은 딥러닝 모델의 학습을 안정화시키고 빠르게 만드는 기법으로, 현대 아키텍처에서 필수적으로 사용된다.
-- 하지만, BN을 사용한 모델들은 **정확도는 올라가지만 calibration은 오히려 나빠지는** 현상이 나타납니다.
+- 하지만, BN을 사용한 모델들은 **정확도는 올라가지만 calibration은 오히려 나빠지는** 현상이 나타난다.
 
 실험 결과 (6-layer ConvNet on CIFAR-100):
 - BN을 적용한 ConvNet은 정확도가 약간 올라가지만(Error 감소), ECE는 뚜렷하게 증가
@@ -70,7 +70,7 @@ miscalibration, as measured by ECE (lower is better)_
 
 - 전통적으로 **weight decay** 는 과적합을 막기 위한 정규화 방법으로 널리 사용되어 왔으며, overfitting을 방지하기 위해 가중치에 패널티를 주는 정규화 기법이다.
 - 최근에는 BN의 정규화 효과 때문에 weight decay 사용량이 줄어드는 추세이다.
-- 하지만 실험에서는 **weight decay를 증가시킬수록 calibration은 개선되는 경향**을 보입니다.
+- 하지만 실험에서는 **weight decay를 증가시킬수록 calibration은 개선되는 경향**을 보인다.
 
 실험 결과 (ResNet-110 on CIFAR-100):
 - Weight decay를 증가시키면 분류 정확도(Error)는 특정 구간에서 최적점을 찍고 이후 다시 증가
@@ -80,26 +80,25 @@ miscalibration, as measured by ECE (lower is better)_
 {: .prompt-tip }
 ---
 
-### 3.4 NLL 과적합 현상 (Overfitting to NLL)
+### 4. NLL 과적합 현상 (Overfitting to NLL)
 
 ![Desktop View](/assets/img/paper-review/On_Calibration_of_modern_NN/figure3.png)
 _Figure 3: Test error and NLL of a 110-layer ResNet with stochastic depth on CIFAR-100 during training_
 
-- 실험에서는 learning rate가 낮아지는 구간에서 test error는 계속 줄어드는 반면, NLL은 다시 증가하는 현상을 보였습니다.
-- 이는 모델이 **정확도는 높이지만 confidence가 실제보다 과도한 상태로 학습이 진행되고 있음**을 의미합니다.
+- 실험에서는 learning rate가 낮아지는 구간에서 test error는 계속 줄어드는 반면, NLL은 다시 증가하는 현상을 확인하였다.
+- 이는 모델이 **정확도는 높이지만 confidence가 실제보다 과도한 상태로 학습이 진행되고 있음**을 의미한다.
 
 실험 결과 (ResNet-110 + stochastic depth on CIFAR-100):
 - Epoch 250 이후 learning rate 감소
 - 이후 test error는 감소 (29% → 27%)하지만, NLL은 증가
 
-> 정확도(0/1 loss)는 줄지만, NLL에 대한 과적합으로 인해 **confidence가 비정상적으로 높아지는 보정 오류**가 발생합니다.
+> 최신 신경망은 학습 후반부에서 NLL을 계속 최소화하려는 과정에서 confidence를 과도하게 높이는 경향이 있으며, 이로 인해 실제 정답률보다 높은 확률을 출력하는 overconfident한 상태로 calibration 오류가 발생한다.
+{: .prompt-tip }
 
 
+## 📐 Calibration의 정의 및 측정 방법
 
-
-### 📐 Calibration의 정의 및 측정 방법
-
-본 논문에서는 다중 클래스 분류 문제를 다루고 있으며, 딥러닝 모델은 주어진 입력 $X \in \mathcal{X}, \quad Y \in \{1, \dots, K\}$를 예측하는다고 가정한다. 모델의 예측 확률은 다음과 같이 정의된다.
+본 논문에서는 다중 클래스 분류 문제를 다루고 있으며, 딥러닝 모델은 주어진 입력 $$X \in \mathcal{X}, \quad Y \in \{1, \dots, K\}$$ 를 예측하는다고 가정한다. 모델의 예측 확률은 다음과 같이 정의된다.
 
 $$
 h(X) = (\hat{Y}, \hat{P})
