@@ -30,7 +30,7 @@ _Figure 1.1: Confidence histograms (top) and reliability diagrams (bottom) for a
 
 본 논문에서는 이러한 문제를 해결하기 위해 다양한 사후 보정(post-hoc calibration) 방법들을 실험적으로 비교하고, 그 중에서도 Temperature Scaling이라는 단 하나의 스칼라 파라미터만을 사용하는 간단한 방법이 매우 효과적이라는 사실을 밝혀냈다. 본 글에서는 이의 실험 코드도 구현하였다.
 
-## 신경망의 Overconfidence 원인 분석
+## 🔍 신경망의 Overconfidence 원인 분석
 
 최근의 신경망 모델들은 높은 정확도를 자랑하지만, 그 **confidence (예측 확률)** 는 실제 정답률과 잘 맞지 않는 경우가 많다. 이 현상을 **miscalibration (불완전한 보정)** 이라고 하며, 그 원인과 관련 요소들을 우선 분석하였다.
 
@@ -40,7 +40,7 @@ _Figure 2: The effect of network depth (far left), width (middle left), Batch No
 miscalibration, as measured by ECE (lower is better)_
 
 
-### 3.1 모델 용량의 증가 (Model Capacity)
+### 1. 모델 용량의 증가 (Model Capacity)
 
 - 최근 딥러닝 모델들은 레이어 수와 필터 수가 급격히 증가하여, 학습 데이터를 더 잘 맞출 수 있는 **모델 용량(capacity)** 을 갖추게 되었다.
 - 하지만 모델 용량이 커질수록 오히려 **confidence가 실제 정확도보다 과도하게 높아지는 과신, 즉 overconfidence** 하는 경향이 나타납니다.
@@ -54,7 +54,7 @@ miscalibration, as measured by ECE (lower is better)_
 
 ---
 
-### 3.2 Batch Normalization의 영향
+### 2. Batch Normalization의 영향
 
 - **Batch Normalization**은 딥러닝 모델의 학습을 안정화시키고 빠르게 만드는 기법으로, 현대 아키텍처에서 필수적으로 사용된다.
 - 하지만, BN을 사용한 모델들은 **정확도는 올라가지만 calibration은 오히려 나빠지는** 현상이 나타납니다.
@@ -257,3 +257,26 @@ $$
 - Temperature Scaling은 이러한 overconfidence를 효과적으로 완화함
 
 ---
+
+
+
+### 실습
+
+```python
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+import torch
+
+# transform 없이 tensor만 받기
+transform = transforms.ToTensor()
+trainset = datasets.CIFAR100(root='./data', train=True, download=True, transform=transform)
+loader = DataLoader(trainset, batch_size=50000, shuffle=False)
+
+data = next(iter(loader))[0]  # (50000, 3, 32, 32)
+mean = data.mean(dim=(0, 2, 3))
+std = data.std(dim=(0, 2, 3))
+
+print("CIFAR-100 평균:", mean)
+print("CIFAR-100 표준편차:", std)
+```
+{: file='cifar10'}
