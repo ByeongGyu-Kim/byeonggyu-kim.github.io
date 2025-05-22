@@ -66,7 +66,7 @@ miscalibration, as measured by ECE (lower is better)_
 {: .prompt-tip }
 ---
 
-### 3.3 Weight Decay 감소의 영향
+### 3. Weight Decay 감소의 영향
 
 - 전통적으로 **weight decay** 는 과적합을 막기 위한 정규화 방법으로 널리 사용되어 왔으며, overfitting을 방지하기 위해 가중치에 패널티를 주는 정규화 기법이다.
 - 최근에는 BN의 정규화 효과 때문에 weight decay 사용량이 줄어드는 추세이다.
@@ -104,7 +104,7 @@ $$
 h(X) = (\hat{Y}, \hat{P})
 $$
 
-여기서 $\hat{Y}$는 예측된 클래스, $\hat{P}$는 각 클래스에 대한 확률 분포이며, softmax 출력의 최댓값으로 정의된다.
+여기서 $$\hat{Y}$$는 예측된 클래스, $$\hat{P}$$는 각 클래스에 대한 확률 분포이며, softmax 출력의 최댓값으로 정의된다.
 
 그럼 완벽하게 보정된 모델의 정의는 어떻게 될까? 본 논문에서는 다음과 같이 정의하고 있다.
 
@@ -114,11 +114,11 @@ $$
 
 위 식에서 알 수 있듯이 모델이 **완벽히 보정(calibrated)**되어 있다는 것은, 예측한 확률 값이 실제 정답률과 일치하는 것을 의미한다. 예를 들어 모델이 100개의 샘플에 대해 모두 0.8의 confidence를 출력했다면, 실제로 그 중 약 80개가 맞아야 완벽히 보정된 것이다.
 
-## 📊 실전에서는 어떻게 측정하는가?
+### 📊 실전에서는 어떻게 측정하는가?
 
-### 🔍 Reliability Diagram (신뢰도 다이어그램)
+#### 🔍 Reliability Diagram (신뢰도 다이어그램)
 
-예측 확률 $\hat{P}$를 구간으로 잘게 나누고, 각 구간에서의 **실제 정답률(accuracy)**과 **평균 confidence**를 비교한다. 만약 모델이 잘 보정되어져 있다면, 각 구간에서는 아래의 관계식이 성립해야한다는 것이다.
+예측 확률 $$\hat{P}$$를 구간으로 잘게 나누고, 각 구간에서의 **실제 정답률(accuracy)**과 **평균 confidence**를 비교한다. 만약 모델이 잘 보정되어져 있다면, 각 구간에서는 아래의 관계식이 성립해야한다는 것이다.
 
 $$
 \text{acc}(B_m) = \frac{1}{|B_m|} \sum_{i \in B_m} \mathbf{1}(\hat{y}_i = y_i)
@@ -132,15 +132,26 @@ $$
 \text{Accuracy}(B_m) \approx \text{Confidence}(B_m)
 $$
 
-여기서 $\text{acc}(B_m)$는 구간 $B_m$에 속하는 샘플들의 실제 정답률, $\text{conf}(B_m)$는 구간 $B_m$에 속하는 샘플들의 평균 confidence를 의미한다. 만약 모델이 잘 보정되어 있다면, 두 값은 서로 비슷해야 한다.
+여기서 $$\text{acc}(B_m)$$는 구간 $$B_m$$에 속하는 샘플들의 실제 정답률, $$\text{conf}(B_m)$$는 구간 $$B_m$$에 속하는 샘플들의 평균 confidence를 의미한다. 만약 모델이 잘 보정되어 있다면, 두 값은 서로 비슷해야 한다.
 
-### 📏 Expected Calibration Error (ECE)
+#### 📏 Expected Calibration Error (ECE)
+ECE는 모델의 전체 calibration 성능을 수치적으로 측정하는 대표적인 지표로, 각 bin에 대해 예측 확률과 실제 정답률 간의 차이를 평균하여 계산한다. $$M$$개의 bin으로 나누고, 각 bin $$B_m$$에 대해 다음과 같이 정의된다.
 
 $$
 \text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{n} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
 $$
 
-## 🛠️ 4. Calibration Methods
+#### 📏 Maximum Calibration Error (MCE)
+MCE는 가장 큰 오차를 보인 bin의 calibration gap을 측정하게 되며, 쉽게 말해 “최악의 보정 실패” 정도를 나타낸다고 생각할 수 있다. 안전이 중요한 시스템에서 매우 중요한 지표로 사용될 수 있다.
+
+$$
+\text{MCE} = \max_{m \in \{1, \dots, M\}} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
+$$
+
+
+
+
+## 🛠️ Calibration Methods
 
 본 장에서는 이미 학습된 모델에 대해 **확률 보정을 위한 사후 처리(Post-hoc) 방법**들을 소개합니다. 이들은 모델의 예측 구조나 정확도는 유지하면서, **예측 확률(confidence)**이 실제 정답률과 더 잘 일치하도록 만들어줍니다.
 
