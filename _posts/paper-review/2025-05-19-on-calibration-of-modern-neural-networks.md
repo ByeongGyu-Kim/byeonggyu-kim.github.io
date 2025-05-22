@@ -171,7 +171,7 @@ Calibration은 $$\hat{p}_i$$ 또는 $$z_i$$를 조정하여 새로운 calibrated
 #### A. Histogram Binning
 
 Histogram Binning은 모델이 출력하는 확률을 일정 구간(bin)으로 나누고, 각 구간 내에서의 실제 정답 비율을 새로운 보정 확률로 사용하는 방법이다.
-모든 $$\hat{p}_i$$를 $$M$$개의 구간(bin) $$B_1, B_2, ..., B_M$$으로 나눈다. 각 bin마다 정답률을 계산하여 그 값을 보정된 확률로 사용한다. 이를 수식으로 살펴보면 다음과 같다.
+모든 $$\hat{p}_i$$를 $$M$$개의 구간 $$B_1, B_2, ..., B_M$$으로 나눈다. 각 bin마다 정답률을 계산하여 그 값을 보정된 확률로 사용한다. 이를 수식으로 살펴보면 다음과 같다.
 
 - 구간 정의: $$B_m = (a_m, a_{m+1}]$$ where $$0 = a_1 \leq a_2 \leq \dots \leq a_{M+1} = 1$$
 - 최적화 문제:
@@ -179,11 +179,13 @@ $$
 \min_{\theta_1,\dots,\theta_M} \sum_{m=1}^{M} \sum_{i=1}^{n} \mathbf{1}(a_m \leq \hat{p}_i < a_{m+1}) (\theta_m - y_i)^2 
 $$
 
-여기서 $$mathbf{1}(\cdot)$$은 indicator 함수이며, 각 bin의 보정 확률은 bin 내 레이블 평균으로 계산되게 된다.
+위의 최적화 문제를 풀게되면 각 bin의 보정 확률은 bin 내 레이블 평균으로 계산되게 된다.
 
 $$
 \theta_m = \frac{1}{|B_m|} \sum_{i \in B_m} y_i
 $$
+
+예시를 통해 살펴보도록 Histogram Binning을 살펴보도록 하겠다.
 
 1. 예측 확률과 실제 정답
 
@@ -199,7 +201,7 @@ $$
 | 8     | 0.89                 |              0 |
 | 9     | 0.95                 |              1 |
 
-2. 구간 나누기
+2. 예측 확률을 bin으로 나눈 결과
 
 | Bin 번호 | 확률 구간      | 해당 샘플 번호   | 정답 목록         | 보정 확률 $$\theta\_m$$ |
 | :----- | :--------- | ---------- | ------------- | ------------------: |
@@ -207,8 +209,16 @@ $$
 | 2      | (0.3, 0.7] | 3, 4, 5    | [1, 0, 1]    |                0.67 |
 | 3      | (0.7, 1.0] | 6, 7, 8, 9 | [1, 1, 0, 1] |                0.75 |
 
+3. 각 bin에서의 실제 정답 평균 (보정 확률)
 
-단순하고 직관적이지만, 예측이 계단 함수처럼 변경되어 부드럽지 않다.
+| Bin 번호 | 정답 목록         | 보정 확률 $$\theta\_m$$ |
+| :----- | :------------ | ------------------: |
+| 1      | [0, 1]       |                0.50 |
+| 2      | [1, 0, 1]    |                0.67 |
+| 3      | [1, 1, 0, 1] |                0.75 |
+
+
+구현이 간단하고 어떤 모델이든 사후 보정으로 적용할 수 있으나, 예측이 계단 함수처럼 변경되어 부드럽지 않으며 bin을 몇 개 가지느냐에 따라 성능이 크게 변화할 수 있다.
 
 #### B. Isotonic Regression
 
@@ -259,9 +269,8 @@ $$
 \hat{P} = \max_k \left( \frac{e^{z_k}}{\sum_j e^{z_j}} \right)
 $$
 
----
 
-#### 🔹 Matrix Scaling
+#### A. Matrix Scaling
 
 - 로짓 벡터 \( z \)에 선형 변환 적용:
 
@@ -272,9 +281,8 @@ $$
 - \( W \in \mathbb{R}^{K \times K} \), \( b \in \mathbb{R}^K \)
 - 강력한 표현력을 가지지만 파라미터 수가 많아 과적합 우려
 
----
 
-#### 🔹 Vector Scaling
+#### B. Vector Scaling
 
 - Matrix Scaling의 간소화 버전으로 \( W \)를 대각 행렬로 제한
 
@@ -284,9 +292,8 @@ $$
 
 - 파라미터 수가 \( 2K \)개로 줄어들며 계산량과 과적합 가능성이 감소
 
----
 
-#### 🌡️ Temperature Scaling
+#### C. Temperature Scaling
 
 - 가장 간단하면서도 강력한 보정 기법
 - 로짓을 스칼라 \( T \)로 나누고 softmax 적용
@@ -299,25 +306,15 @@ $$
 - \( T = 1 \): 원래 모델과 동일
 - \( T < 1 \): 확률이 더 sharp해짐
 
----
 
-### 📌 Temperature Scaling의 특징
 
 - 단 하나의 파라미터 \( T \)만 조정
 - 모델의 예측 클래스는 유지되며, confidence만 조정됨
 - 다중 클래스에서도 손쉽게 적용 가능
 
----
 
-### 🧪 실험 중 Temperature Scaling의 효과
-
-- Epoch 250 이후 learning rate 감소
-- 이후 test error는 감소 (29% → 27%)하지만, NLL은 증가
-- 이는 모델이 더 정확해졌지만, 확률 분포는 더 과신하게 되었음을 의미
-- Temperature Scaling은 이러한 overconfidence를 효과적으로 완화함
 
 ---
-
 
 
 ## 🧪 Python 실습 개요
@@ -325,7 +322,7 @@ $$
 
 모델 학습에는 CIFAR-100 데이터셋과 ResNet-34 모델 구조를 사용하였다. CIFAR-100은 총 100개의 레이블로 구성된 컬러 이미지 데이터셋으로, 각 이미지는 32×32 해상도의 RGB 이미지이다. 각 클래스당 500개의 학습 이미지와 100개의 테스트 이미지가 포함되어 있으며, 총 50,000개의 학습 샘플과 10,000개의 테스트 샘플을 포함한다. 분류 모델로 사용된 ResNet-34는 Residual Network 계열의 대표적인 구조 중 하나로, 34개의 층을 갖는 심층 합성곱 신경망이다. 잔차 연결(residual connection)을 통해 깊은 네트워크에서 발생하는 기울기 소실 문제를 효과적으로 해결할 수 있으며, CIFAR-100과 같은 중간 난이도의 이미지 분류 문제에 널리 사용된다. 본 실험에서는 사전 학습 없이 처음부터 CIFAR-100에 대해 ResNet-34를 학습시켰으며, 출력층 fully-connected layer의 출력 차원을 100으로 설정하여 100개의 클래스를 분류하도록 구성하였다.
 
-본 실험에서는 학습된 ResNet-34 모델을 기준으로 *T* ∈ $\{0.5,\ 1.0,\ 1.5,\ 2.0\}$ 범위에 대해 Temperature Scaling을 적용한 후, 다음과 같은 관점에서 보정 성능을 평가하였다:
+본 실험에서는 학습된 ResNet-34 모델을 기준으로 *T* ∈ $${0.5, 1.0, 1.5, 2.0}$$ 범위에 대해 Temperature Scaling을 적용한 후, 다음과 같은 관점에서 보정 성능을 평가하였다:
 
 1. Reliability Diagram을 통해 confidence vs accuracy 관계를 시각화
 2. Expected Calibration Error (ECE) 수치를 계산하여 정량적 보정 성능 평가
@@ -416,7 +413,7 @@ for epoch in range(epochs):
         optimizer.step()                   # 가중치 업데이트
 
         running_loss += loss.item()
-        _, predicted = outputs.max(1)             # 가장 높은 확률을 가진 클래스 선택
+        _, predicted = outputs.max(1)
         total += labels.size(0)
         correct += predicted.eq(labels).sum().item()
 
