@@ -16,6 +16,9 @@ pin: false
 mermaid: false
 ---
 
+### 📄 논문 정보
+[**"On Calibration of Modern Neural Networks" (ICML 2017)**](https://arxiv.org/abs/1706.04599)
+
 ## 📌 연구 개요
 **Confidence Calibration**은 모델이 예측한 확률이 실제 정답일 가능성과 얼마나 일치하는지를 나타내는 개념이다. 예를 들어, 어떤 이미지에 대해 모델이 고양이일 확률을 0.9라고 예측했을 때, 이러한 예측이 잘 보정(calibrated)되어 있다면 실제로 그 이미지가 고양이일 확률도 약 90%가 되어야 한다는 것이다.
 
@@ -23,7 +26,7 @@ mermaid: false
 
 
 ![Desktop View](/assets/img/paper-review/On_Calibration_of_modern_NN/figure1.png)
-_Figure 1.1: Confidence histograms (top) and reliability diagrams (bottom) for a 5-layer LeNet (left) and a 110-layer ResNet (right) on CIFAR-100. Refer to the text below for detailed illustration._
+_Figure 1: Confidence histograms (top) and reliability diagrams (bottom) for a 5-layer LeNet (left) and a 110-layer ResNet (right) on CIFAR-100. Refer to the text below for detailed illustration._
 
 
 이러한 문제는 자율주행, 의료 진단, 법률 판단 등과 같이 예측 결과에 대한 신뢰도가 매우 중요한 응용 분야에서 특히 도드라질 수 있기에 모델이 단순히 정확할 뿐만 아니라, 자신의 예측이 얼마나 확실한지에 대한 표현 또한 신뢰할 수 있어야 한다.
@@ -187,7 +190,7 @@ $$
 
 예시를 통해 살펴보도록 Histogram Binning을 살펴보도록 하겠다.
 
-1. 예측 확률과 실제 정답
+- 예측 확률과 실제 정답
 
 | 샘플 번호 | 예측 확률 $$\hat{p}\_i$$ | 실제 정답 $$y\_i$$ |
 | :---- | :------------------- | -------------: |
@@ -201,7 +204,7 @@ $$
 | 8     | 0.89                 |              0 |
 | 9     | 0.95                 |              1 |
 
-1. 예측 확률을 bin으로 나눈 결과
+- 예측 확률을 bin으로 나눈 결과
 
 | Bin 번호 | 확률 구간      | 해당 샘플 번호   | 정답 목록         | 보정 확률 $$\theta\_m$$ |
 | :----- | :--------- | ---------- | ------------- | ------------------: |
@@ -209,7 +212,7 @@ $$
 | 2      | (0.3, 0.7] | 3, 4, 5    | [1, 0, 1]    |                0.67 |
 | 3      | (0.7, 1.0] | 6, 7, 8, 9 | [1, 1, 0, 1] |                0.75 |
 
-1. 각 bin에서의 실제 정답 평균 (보정 확률)
+- 각 bin에서의 실제 정답 평균 (보정 확률)
 
 | Bin 번호 | 정답 목록         | 보정 확률 $$\theta\_m$$ |
 | :----- | :------------ | ------------------: |
@@ -262,58 +265,69 @@ $$
 
 ### 📘 2. Extension to Multiclass Models
 
-다중 클래스에서는 softmax를 사용하여 다음과 같이 확률을 계산합니다:
+물론입니다. 아래는 `📘 2. Extension to Multiclass Models` 내용을 수식 포함 마크다운 형식으로 **한 번에 복사할 수 있도록** 정리한 것입니다:
+
+---
+
+### 📘 2. Extension to Multiclass Models
+
+다중 클래스 분류 문제에서는 각 입력 샘플 $$x_i$$에 대해 **logit 벡터** $$z$$를 softmax에 입력하여 다음과 같이 확률을 계산한다.
 
 $$
 \hat{P} = \max_k \left( \frac{e^{z_k}}{\sum_j e^{z_j}} \right)
 $$
 
-
 #### A. Matrix Scaling
 
-- 로짓 벡터 \( z \)에 선형 변환 적용:
+Logit 벡터 $$z$$에 대해 **선형 변환** $$Wz + b$$를 적용하고 softmax를 취한다.
 
 $$
-\hat{q} = \text{softmax}(W z + b)
+\hat{q} = \text{softmax}(Wz + b)
 $$
 
-- \( W \in \mathbb{R}^{K \times K} \), \( b \in \mathbb{R}^K \)
-- 강력한 표현력을 가지지만 파라미터 수가 많아 과적합 우려
-
+- $$W \in \mathbb{R}^{K \times K}$$, $$b \in \mathbb{R}^K$$
+- 매우 유연한 표현이 가능하지만, **파라미터 수가 많아 과적합 가능성**이 존재한다.
 
 #### B. Vector Scaling
 
-- Matrix Scaling의 간소화 버전으로 \( W \)를 대각 행렬로 제한
+Matrix Scaling을 간소화한 버전으로, $$W$$를 **대각 행렬** $$D$$로 제한한 것이다.
 
 $$
-\hat{q} = \text{softmax}(D z + b)
+\hat{q} = \text{softmax}(Dz + b)
 $$
 
-- 파라미터 수가 \( 2K \)개로 줄어들며 계산량과 과적합 가능성이 감소
+- 파라미터 수는 $$2K$$개로 줄어들며, 계산 효율성과 과적합 가능성이 줄어든다.
 
 
 #### C. Temperature Scaling
 
-- 가장 간단하면서도 강력한 보정 기법
-- 로짓을 스칼라 \( T \)로 나누고 softmax 적용
+가장 간단하면서도 강력한 보정 기법으로 logit을 $$T$$로 나누고 softmax 적용한다.
 
 $$
 \hat{q} = \text{softmax}(z / T)
 $$
 
-- \( T > 1 \): 확률이 분산됨 (과신 완화)
+- \( T > 1 \): 확률이 분산됨
 - \( T = 1 \): 원래 모델과 동일
 - \( T < 1 \): 확률이 더 sharp해짐
 
-
-
-- 단 하나의 파라미터 \( T \)만 조정
-- 모델의 예측 클래스는 유지되며, confidence만 조정됨
-- 다중 클래스에서도 손쉽게 적용 가능
-
-
-
 ---
+
+## 🎯 실험 목적
+현대 딥러닝 모델은 높은 분류 정확도를 달성하지만, 예측 확률은 과신(overconfidence)되는 경향이 있는 것을 앞서 살펴보았으며,
+다양한 사후 확률 보정(post-hoc calibration) 기법들을 정리하였다. 이들을 비교하고 가장 효과적인 방법을 식별하고자 한다.
+
+- 모델: ResNet, Wide ResNet, DenseNet, LeNet, DAN, TreeLSTM
+- 데이터셋: CIFAR-10, CIFAR-100, ImageNet, SVHN, Birds, Cars, 20News, Reuters, SST
+- 평가지표: Expected Calibration Error (ECE), Maximum Calibration Error (MCE), Negative Log Likelihood (NLL), Error Rate
+
+![Desktop View](/assets/img/paper-review/On_Calibration_of_modern_NN/figure5.png)
+_Figure 5: ECE (%) (with M = 15 bins) on standard vision and NLP datasets before calibration and with various calibration methods. The number following a model’s name denotes the network depth._
+
+논문은 현대 신경망들이 높은 정확도에도 불구하고 예측 확률이 과도하게 자신감(overconfident)을 가진다는 문제를 지적하고 있으며,
+Temperature Scaling은 단 하나의 파라미터만으로 대부분의 경우 가장 우수한 보정 성능(ECE 감소)을 보여주었다.
+다른 복잡한 보정 기법들보다 간단하고 안정적으로 작동하며, 정확도를 떨어뜨리지 않고 확률만 조정할 수 있다는 것을 확인할 수 있었으며,
+CIFAR-100 등 다양한 데이터셋에서 ECE가 최대 16% → 1% 수준으로 크게 감소하였다.
 
 
 ## 🧪 Python 실습 개요
