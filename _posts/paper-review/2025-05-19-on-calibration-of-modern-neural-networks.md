@@ -16,7 +16,7 @@ pin: false
 mermaid: false
 ---
 
-### 📄 논문 정보
+## 📄 논문 정보
 [**"On Calibration of Modern Neural Networks" (ICML 2017)**](https://arxiv.org/abs/1706.04599)
 
 ## 📌 연구 개요
