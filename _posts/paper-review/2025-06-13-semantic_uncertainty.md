@@ -3,6 +3,7 @@ title: "Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation 
 date: 2025-06-13 18:00:00 +0900
 categories:
   - Paper-Review
+  - Uncertainty Estimation
 tags:
   - Uncertainty Estimation
   - Semantic Uncertainty
