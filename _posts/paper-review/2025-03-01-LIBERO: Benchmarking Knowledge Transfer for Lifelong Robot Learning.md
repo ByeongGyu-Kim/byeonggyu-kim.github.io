@@ -3,8 +3,7 @@ title: "LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning"
 date: 2025-02-04 18:00:00 +0900
 categories:
   - Paper-Review
-  - Robotics
-  - Trustworthy Machine Learning
+  - Vision Language Action
 tags:
   - Lifelong Learning
 description: 
